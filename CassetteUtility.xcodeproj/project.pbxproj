@@ -20,6 +20,7 @@
 
 /* Begin PBXFileReference section */
 		953F534C2F06FE7A009B016D /* CassetteUtility */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CassetteUtility; sourceTree = BUILT_PRODUCTS_DIR; };
+		95DF349B2F070141002B280F /* libcassetteio.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libcassetteio.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -28,10 +29,22 @@
 			path = CassetteUtility;
 			sourceTree = "<group>";
 		};
+		95DF34A42F07016F002B280F /* libcassetteio */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = libcassetteio;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		953F53492F06FE7A009B016D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95DF34992F070141002B280F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -45,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				953F534E2F06FE7A009B016D /* CassetteUtility */,
+				95DF34A42F07016F002B280F /* libcassetteio */,
 				953F534D2F06FE7A009B016D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -53,11 +67,22 @@
 			isa = PBXGroup;
 			children = (
 				953F534C2F06FE7A009B016D /* CassetteUtility */,
+				95DF349B2F070141002B280F /* libcassetteio.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		95DF34972F070141002B280F /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		953F534B2F06FE7A009B016D /* CassetteUtility */ = {
@@ -74,6 +99,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				953F534E2F06FE7A009B016D /* CassetteUtility */,
+				95DF34A42F07016F002B280F /* libcassetteio */,
 			);
 			name = CassetteUtility;
 			packageProductDependencies = (
@@ -81,6 +107,28 @@
 			productName = CassetteUtility;
 			productReference = 953F534C2F06FE7A009B016D /* CassetteUtility */;
 			productType = "com.apple.product-type.tool";
+		};
+		95DF349A2F070141002B280F /* libcassetteio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 95DF349E2F070141002B280F /* Build configuration list for PBXNativeTarget "libcassetteio" */;
+			buildPhases = (
+				95DF34972F070141002B280F /* Headers */,
+				95DF34982F070141002B280F /* Sources */,
+				95DF34992F070141002B280F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				95DF34A42F07016F002B280F /* libcassetteio */,
+			);
+			name = libcassetteio;
+			packageProductDependencies = (
+			);
+			productName = libcassetteio;
+			productReference = 95DF349B2F070141002B280F /* libcassetteio.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
 
@@ -92,6 +140,9 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					953F534B2F06FE7A009B016D = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					95DF349A2F070141002B280F = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -111,12 +162,20 @@
 			projectRoot = "";
 			targets = (
 				953F534B2F06FE7A009B016D /* CassetteUtility */,
+				95DF349A2F070141002B280F /* libcassetteio */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
 		953F53482F06FE7A009B016D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95DF34982F070141002B280F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -263,6 +322,32 @@
 			};
 			name = Release;
 		};
+		95DF349C2F070141002B280F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7AGF9N4R2H;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		95DF349D2F070141002B280F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7AGF9N4R2H;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -280,6 +365,15 @@
 			buildConfigurations = (
 				953F53542F06FE7A009B016D /* Debug */,
 				953F53552F06FE7A009B016D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		95DF349E2F070141002B280F /* Build configuration list for PBXNativeTarget "libcassetteio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				95DF349C2F070141002B280F /* Debug */,
+				95DF349D2F070141002B280F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
