@@ -5,7 +5,6 @@
 //  Created by Serge Tsyba on 3.1.2026.
 //
 
-import ArgumentParser
+import libcassetteio
 
-print("Hello, World!")
-
+cassette_init()
