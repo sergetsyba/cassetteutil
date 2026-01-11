@@ -13,7 +13,9 @@ struct CassetteUtility: ParsableCommand {
 		commandName: "cassettteutil",
 		subcommands: [
 			Write.self,
-			ListFormats.self
+			ListFormats.self,
+			ListInputDevices.self,
+			ListOutputDevices.self
 		])
 }
 
