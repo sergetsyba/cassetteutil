@@ -14,11 +14,11 @@ struct ListInputDevices: ParsableCommand {
 		abstract: "List available audio input devices.")
 	
 	func run() throws {
-		try AudioObject.devices
+		let cells = try AudioObject.devices
 			.filter({ try $0.inputStreams.count > 0 })
-			.forEach() {
-				print("\($0.id): \(try $0.name)")
-			}
+			.map({ ["\($0.id)", try $0.name] })
+		
+		print2(cells: cells, separator: ": ")
 	}
 }
 
@@ -28,11 +28,11 @@ struct ListOutputDevices: ParsableCommand {
 		abstract: "List available audio output devices.")
 	
 	func run() throws {
-		try AudioObject.devices
+		let cells = try AudioObject.devices
 			.filter({ try $0.outputStreams.count > 0 })
-			.forEach() {
-				print("\($0.id): \(try $0.name)")
-			}
+			.map({ ["\($0.id)", try $0.name] })
+		
+		print2(cells: cells, separator: ": ")
 	}
 }
 
