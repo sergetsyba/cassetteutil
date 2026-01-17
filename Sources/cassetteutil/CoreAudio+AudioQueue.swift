@@ -9,27 +9,27 @@ import AudioToolbox
 
 class AudioQueue {
 	private var ref: AudioQueueRef!
-	private var outputCallback: ((AudioQueue, AudioQueueBufferRef) -> Void)?
-	private var propertyCallbacks: [AudioQueuePropertyID: [(Any) -> Void]] = [:]
+	private var bufferCallback: ((AudioQueueBufferRef) -> Void)?
+	private var propertyCallbacks: [AudioQueuePropertyID: [() -> Void]] = [:]
 	
-	func setOutput(format: AudioStreamBasicDescription, _ callback: (AudioQueue, AudioQueueBufferRef) throws -> Void) throws {
+	func setOutput(format: AudioStreamBasicDescription, _ bufferCallback: @escaping (AudioQueueBufferRef) -> Void) throws {
 		// TODO: clean-up queue ref if present
-		
-		var queue: AudioQueueRef?
 		var format = format
 		let data = Unmanaged.passUnretained(self)
 			.toOpaque()
 		
 		let callback: AudioQueueOutputCallback = { (data, _, buffer) in
-			let queue = Unmanaged<AudioQueue>.fromOpaque(data!)
+			Unmanaged<AudioQueue>.fromOpaque(data!)
 				.takeUnretainedValue()
-			queue.outputCallback?(queue, buffer)
+				.bufferCallback?(buffer)
 		}
 		
-		let error = AudioQueueNewOutput(&format, callback, data, nil, nil, 0, &queue)
+		let error = AudioQueueNewOutput(&format, callback, data, nil, nil, 0, &self.ref)
 		guard error == noErr else {
 			throw error
 		}
+		
+		self.bufferCallback = bufferCallback
 	}
 	
 	func start() throws {
@@ -75,36 +75,43 @@ extension AudioQueue {
 // MARK: Properties
 extension AudioQueue {
 	func value<T>(for property: AudioQueuePropertyID) throws -> T {
-		return try withUnsafeTemporaryAllocation(of: T.self, capacity: 1) {
-			var pointer = $0.baseAddress!
-			var size = UInt32(MemoryLayout<T>.size)
-			
-			let status = AudioQueueGetProperty(self.ref, property, pointer, &size)
-			guard status == noErr else {
-				throw status
-			}
-			
-			return pointer.pointee
+		let pointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
+		var size = UInt32(MemoryLayout<T>.size)
+		defer {
+			pointer.deallocate()
 		}
+		
+		let status = AudioQueueGetProperty(self.ref, property, pointer, &size)
+		guard status == noErr else {
+			throw status
+		}
+		
+		return pointer.pointee
 	}
 	
-	func addPropertyListener<T>(for property: AudioQueuePropertyID, callback: (T) throws -> Void) throws {
-		var data = Unmanaged<AudioQueue>.passUnretained(self)
+	func addPropertyListener<T>(for property: AudioQueuePropertyID, changeCallback: @escaping (T) -> Void) throws {
+		let data = Unmanaged<AudioQueue>.passUnretained(self)
 			.toOpaque()
 		
-		let callback: AudioQueuePropertyListenerProc = { data, _, _ in
-			let queue = Unmanaged<AudioQueue>.fromOpaque(data!)
+		let callback: AudioQueuePropertyListenerProc = { data, _, property in
+			Unmanaged<AudioQueue>.fromOpaque(data!)
 				.takeUnretainedValue()
-			
-			if let value: T = try? queue.value(for: property),
-			   let callbacks = queue.propertyCallbacks[property] {
-				for callback in callbacks {
-					callback(value)
-				}
-			}
+				.propertyCallbacks[property]?
+				.forEach({ $0() })
 		}
 		
-		let status = AudioQueueAddPropertyListener(self.ref, property, callback, &data)
+		var callbacks = self.propertyCallbacks[property] ?? []
+		callbacks.append({
+			do {
+				let value: T = try self.value(for: property)
+				changeCallback(value)
+			} catch {
+				// does nothing
+			}
+		})
+		self.propertyCallbacks[property] = callbacks
+		
+		let status = AudioQueueAddPropertyListener(self.ref, property, callback, data)
 		guard status == noErr else {
 			throw status
 		}
@@ -112,15 +119,16 @@ extension AudioQueue {
 }
 
 extension AudioQueue {
-	var isPlaying: Bool {
+	var isRunning: Bool {
 		get throws {
-			try self.value(for: .isPlaying) != 0
+			let isRunning: UInt32 = try self.value(for: .isRunning)
+			return isRunning != 0
 		}
 	}
 }
 
 extension AudioQueuePropertyID {
-	static let isPlaying: Self = kAudioQueueProperty_IsRunning
+	static let isRunning: Self = kAudioQueueProperty_IsRunning
 }
 
 

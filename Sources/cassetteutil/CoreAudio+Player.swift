@@ -1,13 +1,11 @@
 //
-//  AudioPlayer.swift
+//  CoreAudio+Player.swift
 //  CassetteUtility
 //
 //  Created by Serge Tsyba on 12.1.2026.
 //
 
-import Foundation
 import AudioToolbox
-import libcassetteio
 
 extension AudioQueue {
 	static func play(format: AudioStreamBasicDescription, _ write: @escaping (AudioQueueBufferRef) -> Bool) async throws {
@@ -37,8 +35,8 @@ extension AudioQueue {
 				}
 				// return once all buffers finished playing and no more
 				// samples have been produced
-				try queue.addPropertyListener(for: .isPlaying) { (isPlaying: UInt32) in
-					if isPlaying == 0 {
+				try queue.addPropertyListener(for: .isRunning) { (isRunning: UInt32) in
+					if isRunning == 0 {
 						continuation.resume(with: .success(()))
 					}
 				}
@@ -47,6 +45,8 @@ extension AudioQueue {
 			} catch {
 				continuation.resume(throwing: error)
 			}
+			
+			// TODO: dispose audio queue
 		}
 	}
 }
