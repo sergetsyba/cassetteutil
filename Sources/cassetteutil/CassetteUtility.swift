@@ -8,7 +8,8 @@
 import ArgumentParser
 import libcassetteio
 
-struct CassetteUtility: ParsableCommand {
+@main
+struct CassetteUtility: AsyncParsableCommand {
 	static let configuration = CommandConfiguration(
 		commandName: "cassettteutil",
 		subcommands: [
@@ -18,10 +19,6 @@ struct CassetteUtility: ParsableCommand {
 			ListOutputDevices.self
 		])
 }
-
-CassetteUtility
-	.main()
-
 
 func print2(cells: [[String]], separator: String = "\t") {
 	guard cells.count > 0,
