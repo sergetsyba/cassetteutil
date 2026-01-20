@@ -6,7 +6,6 @@
 //
 
 #include "cassetteio.h"
-#include "files.h"
 
 #include <stdint.h>
 #include <stdbool.h>
