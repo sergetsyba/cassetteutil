@@ -1,5 +1,5 @@
 //
-//  CoreAudio+File.swift
+//  CoreAudio+WriteFile.swift
 //  CassetteUtility
 //
 //  Created by Serge Tsyba on 19.1.2026.
@@ -12,7 +12,7 @@ class AudioFile {
 }
 
 extension AudioFile {
-	static func write(at url: URL, format: AudioStreamBasicDescription, _ write: @escaping (UnsafeMutablePointer<Int8>, Int) -> Int) async throws {
+	static func writeFile(at url: URL, format: AudioStreamBasicDescription, _ write: @escaping (UnsafeMutablePointer<Int8>, Int) -> Int) async throws {
 		var format = format
 		let file = AudioFile()
 		

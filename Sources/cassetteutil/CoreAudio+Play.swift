@@ -1,5 +1,5 @@
 //
-//  CoreAudio+Player.swift
+//  CoreAudio+Play.swift
 //  CassetteUtility
 //
 //  Created by Serge Tsyba on 12.1.2026.
