@@ -43,7 +43,7 @@ static OSStatus ExtAudioFileCreateWithPath(const char *path, AudioFileTypeID inF
 	return status;
 }
 
-int cassette_write_file(const char *path, int sample_rate, size_t (write_buffer)(float *, size_t, const void *), const void *user_data) {
+int cassette_write_file(const char *path, int sample_rate, size_t (^write_buffer)(float *, size_t)) {
 	AudioStreamBasicDescription audio_format = default_audio_format;
 	audio_format.mSampleRate = (Float64)sample_rate;
 	AudioStreamBasicDescription file_format = default_file_format;
@@ -76,7 +76,7 @@ int cassette_write_file(const char *path, int sample_rate, size_t (write_buffer)
 	UInt32 write_size = 0;
 	do {
 		// fill buffer
-		write_size = (UInt32)write_buffer(buffer, buffer_size, user_data);
+		write_size = (UInt32)write_buffer(buffer, buffer_size);
 		buffer_list.mBuffers[0].mDataByteSize = write_size;
 		
 		// write file

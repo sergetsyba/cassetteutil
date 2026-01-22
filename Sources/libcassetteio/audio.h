@@ -10,6 +10,20 @@
 
 #include <stddef.h>
 
-int cassette_write_file(const char *path, int sample_rate, size_t (write_buffer)(float *, size_t, const void *), const void *user_data);
+/**
+ * Creates an AIFF file at the specified path using the block closure which generates the audio samples.
+ *
+ * The specified block closure is called repeatedly with a pointer to a pre-allocated buffer and its size in
+ * bytes to write audio samples to. The block closure must write audio samples with magnitudes in range
+ * [-1.0, 1.0] and return the __total size__ of written audio samples, in bytes. To signal the end of audio,
+ * the block closure must return 0 once there are no more audio samples written.
+ *
+ * @param path Path to an AIFF file to create.
+ * @param sample_rate Output audio sample rate, in Hz.
+ * @param write_buffer Block closure, which is called to write a portion audio samples to the
+ * 		specified buffer, and returns the size of written data, in bytes.
+ * @return 0 when creating a file succeeds; error code when fails.
+ */
+int cassette_write_file(const char *path, int sample_rate, size_t (^write_buffer)(float *, size_t));
 
 #endif /* audio_h */
