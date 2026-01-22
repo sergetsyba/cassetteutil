@@ -1,11 +1,11 @@
 //
-//  cassetteio.c
+//  apple2.c
 //  libcassetteio
 //
 //  Created by Serge Tsyba on 3.1.2026.
 //
 
-#include "cassetteio.h"
+#include "apple2.h"
 
 #include <stdlib.h>
 #include <string.h>

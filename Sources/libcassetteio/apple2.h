@@ -1,12 +1,12 @@
 //
-//  cassetteio.h
+//  apple2.h
 //  libcassetteio
 //
 //  Created by Serge Tsyba on 1.1.2026.
 //
 
-#ifndef cassetteio_h
-#define cassetteio_h
+#ifndef apple2_h
+#define apple2_h
 
 #include <stdint.h>
 
@@ -45,4 +45,4 @@ cassette_apple2_encoder *cassette_apple2_alloc_encoder(const uint8_t *data, size
  */
 size_t cassette_apple2_write_monitor_record(float *buffer, size_t buffer_size, cassette_apple2_encoder *encoder);
 
-#endif /* cassetteio_h */
+#endif /* apple2_h */
