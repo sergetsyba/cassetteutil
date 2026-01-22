@@ -1,0 +1,13 @@
+//
+//  file.h
+//  CassetteUtility
+//
+//  Created by Serge Tsyba on 22.1.2026.
+//
+
+#ifndef file_h
+#define file_h
+
+#include <stdio.h>
+
+#endif /* file_h */

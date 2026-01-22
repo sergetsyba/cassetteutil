@@ -9,54 +9,40 @@
 #define cassetteio_h
 
 #include <stdint.h>
-#include <stdio.h>
+
+typedef struct cassette_apple2_encoder cassette_apple2_encoder;
 
 /**
- * Writes the specified data as a standard Apple II cassette audio record using Frequency Shift Keying
- * protocol to the specified file.
+ * Allocates a new instance of Apple II cassette audio record encoder.
  *
- * @param data Data to be output as audio record.
- * @param size Number of bytes in the data.
- * @param sample_rate Output audio sample rate in Hz.
- * @param file File handle to write data to. File must be fseek-able (wb+).
- * @return Number of samples written.
+ * @param data Data to encode as audio cassette record. Encoder only keeps a reference to the data,
+ *		so it must not be freed or modified until encoding is complete.
+ * @param data_size Size of data to encode as audio cassette record, in bytes.
+ * @param sample_rate Encoded audio cassette record sample rate, in Hz.
+ * @return A new instance of encoder, or NULL when allocation fails.
  */
-int fwrite_fsk(uint8_t *data, size_t size, int sample_rate, FILE *file);
+cassette_apple2_encoder *cassette_apple2_alloc_encoder(const uint8_t *data, size_t data_size, int sample_rate);
 
 /**
- * Writes the specified data as a standard Apple II cassette audio record using Frequency Shift Keying
- * protocol to the specified buffer.
+ * Writes encoded audio samples of a standard Apple II cassette audio record into the specified audio
+ * sample buffer.
  *
- * @param src Data to be encoded as audio record.
- * @param src_size Number of bytes in the data.
- * @param dst Pointer to an allocated array of audio samples encoded from data.
- * @param sample_rate Output audio sample rate in Hz.
- * @return Number of samples written.
+ * This function writes as many audio samples as fit into the buffer of the specified size and returns the
+ * number of samples written. Call this function repeatedly with the same encoder instance until it returns 0,
+ * at which point encoding is complete.
+ *
+ * This function writes output audio samples in chunks, encoded from whole FSK cycles. It returns once
+ * encoded audio samples of a single cycle no longer fit into the buffer. As a consequence, the output
+ * buffer must be large enough to fit audio samples of at least one FSK cycle. This size equals to output
+ * audio sample rate × 0.0013. For instance, for a sample rate of 44100 Hz, the output audio buffer size
+ * must be at least 58 bytes.
+ *
+ * @param buffer Pointer to a pre-allocated buffer where output audio samples are written.
+ * @param buffer_size Size of the output audio sample buffer, in bytes.
+ * @param encoder An instance of Apple II cassette encoder, which preserves encoding state
+ * 		between calls.
+ * @return Size of all encoded audio samples written, in bytes.
  */
-int write_fsk(uint8_t *data, size_t data_size, int8_t *buffer, size_t buffer_size, int sample_rate);
-
-typedef struct {
-	long data_size;
-	uint8_t *data;
-	uint8_t checksum;
-	
-	/// Output sample rate.
-	int sample_rate;
-	/// Number of samples to be carried over to the next half-cycle due to fractional mismatch
-	/// between sampling rate and wave frequency.
-	int remainder;
-	
-	int cycle_index;
-	int cycle_count;
-} cassette_apple2_encoder;
-
-cassette_apple2_encoder *cassette_apple2_malloc_encoder(const uint8_t *data, size_t data_size, int sample_rate);
-
-/**
- * Writes the specified data as a standard Apple II monitor cassette audio record to the specified
- * audio sample buffer.
- */
-size_t cassette_apple2_write_monitor_record(int8_t *buffer, size_t buffer_size, cassette_apple2_encoder *encoder);
-size_t cassette_apple2_fwrite_monitor_record(FILE *file, cassette_apple2_encoder *encoder);
+size_t cassette_apple2_write_monitor_record(float *buffer, size_t buffer_size, cassette_apple2_encoder *encoder);
 
 #endif /* cassetteio_h */
