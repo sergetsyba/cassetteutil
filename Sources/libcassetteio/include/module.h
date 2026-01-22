@@ -9,7 +9,6 @@
 #define module_h
 
 #include <../apple2.h>
-
-#include <../file.h>
+#include <../audio.h>
 
 #endif /* module_h */

@@ -23,12 +23,11 @@ let package = Package(
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				"libcassetteio"
 			],
-			path: "Sources/cassetteutil",
-			linkerSettings: [
-				.linkedFramework("AudioToolbox")
-			]),
+			path: "Sources/cassetteutil"),
 		.target(
 			name: "libcassetteio",
-			dependencies: [],
-			path: "Sources/libcassetteio")
+			path: "Sources/libcassetteio",
+			linkerSettings: [
+				.linkedFramework("CoreAudio")
+			])
 	])
