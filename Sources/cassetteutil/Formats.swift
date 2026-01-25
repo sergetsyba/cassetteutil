@@ -7,33 +7,29 @@
 
 import ArgumentParser
 
-enum Format: String, ExpressibleByArgument {
-	case frequencyShiftKeying
-}
-
-
-// MARK: -
 struct ListFormats: ParsableCommand {
 	static let configuration = CommandConfiguration(
 		abstract: "List supported data formats.")
 	
 	func run() throws {
-		print("Supported formats and aliases:")
-		
 		for format in Format.cases {
-			let joined = format.aliases
-				.joined(separator: ", ")
-			
-			print("\t\(joined)")
+			print(format)
 		}
 	}
+}
+
+
+// MARK: -
+// MARK: Formats
+enum Format: String, ExpressibleByArgument {
+	case apple2
 }
 
 extension Format {
 	var aliases: [String] {
 		switch self {
-		case .frequencyShiftKeying:
-			return ["frequency-shift-keying", "fsk", "apple2"]
+		case .apple2:
+			return ["apple2", "apple2-monitor"]
 		}
 	}
 	
@@ -50,6 +46,6 @@ extension Format {
 // prevents ArgumentParser from including default values in help info
 extension Format {
 	static var cases: [Self] {
-		return [.frequencyShiftKeying]
+		return [.apple2]
 	}
 }
