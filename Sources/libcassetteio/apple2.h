@@ -24,6 +24,13 @@ typedef struct cassette_apple2_encoder cassette_apple2_encoder;
 cassette_apple2_encoder *cassette_apple2_alloc_encoder(const uint8_t *data, size_t data_size, int sample_rate);
 
 /**
+ * Frees memory allocated for the specified Apple II cassette audio record encoder.
+ *
+ * @param encoder An instance of Apple II cassette audio record encdoder to deallocate.
+ */
+void cassette_apple2_free_encoder(cassette_apple2_encoder *encoder);
+
+/**
  * Writes encoded audio samples of a standard Apple II cassette audio record into the specified audio
  * sample buffer.
  *

@@ -44,6 +44,10 @@ cassette_apple2_encoder *cassette_apple2_alloc_encoder(const uint8_t *data, size
 	return encoder;
 }
 
+void cassette_apple2_free_encoder(cassette_apple2_encoder *encoder) {
+	free(encoder);
+}
+
 static uint64_t sample_count(int sample_rate, int duration, int *remainder) {
 	// number of samples in a signal interval, measured in μs;
 	// uint64_t guards against integer overflow
