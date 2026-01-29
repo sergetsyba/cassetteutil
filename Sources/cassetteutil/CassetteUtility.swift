@@ -18,3 +18,48 @@ struct CassetteUtility: AsyncParsableCommand {
 			ListOutputs.self
 		])
 }
+
+
+// MARK: -
+// MARK: Output formatting
+extension Collection where Element: Collection< StringProtocol>, Index == Element.Index {
+	func print(separator: String = "\t") {
+		guard let firstRow = self.first,
+			  firstRow.count > 0 else {
+			return
+		}
+		
+		let widths = firstRow.indices
+			.map() { index in
+				return self.map({ $0[index].count })
+					.max() ?? 0
+			}
+		
+		for row in self {
+			let formatted = row.enumerated()
+				.map() { (index, string) in
+					String(string)
+						.padded(toLength: widths[index], atEnd: index > 0)
+				} .joined(separator: separator)
+			
+			Swift.print(formatted)
+		}
+	}
+}
+
+extension StringProtocol {
+	func padded(toLength length: Int, using pad: Self = " ", atEnd: Bool = true) -> String {
+		let padLength = length - self.count
+		guard padLength > 0 else {
+			return String(self)
+		}
+		
+		let pad = (0..<padLength)
+			.map({ _ in pad })
+			.joined()
+		
+		return atEnd
+		? self.appending(pad)
+		: pad.appending(self)
+	}
+}
