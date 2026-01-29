@@ -23,8 +23,9 @@
  * 		the output audio device.
  * @param write_buffer Block closure, which is called to write a portion audio samples to the
  * 		specified buffer, and returns the size of written data, in bytes.
+ * @return 0 when playback succeeds, error code when fails.
  */
-int cassette_play(const int * _Nullable device_id, const int * _Nullable sample_rate, size_t (^ _Nonnull write_buffer)(float * _Nonnull, size_t), void (^ _Nonnull completion_handler)(int));
+int cassette_play(const int *device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int));
 
 /**
  * Creates an AIFF file at the specified path using the block closure which generates the audio samples.
@@ -40,6 +41,6 @@ int cassette_play(const int * _Nullable device_id, const int * _Nullable sample_
  * 		specified buffer, and returns the size of written data, in bytes.
  * @return 0 when creating a file succeeds; error code when fails.
  */
-int cassette_write_file(const char * _Nonnull path, int sample_rate, size_t (^ _Nonnull write_buffer)(float * _Nonnull , size_t));
+int cassette_write_file(const char *path, int sample_rate, size_t (^write_buffer)(float *, size_t));
 
 #endif /* audio_h */

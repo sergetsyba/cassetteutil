@@ -53,7 +53,7 @@ typedef struct play_context {
 
 static OSStatus clean_up_play(play_context *data, AudioQueueRef queue, OSStatus status);
 
-static void output_callback(void * _Nonnull data, AudioQueueRef queue, AudioQueueBufferRef buffer) {
+static void output_callback(void *data, AudioQueueRef queue, AudioQueueBufferRef buffer) {
 	// write audio samples
 	play_context *context = (play_context *)data;
 	buffer->mAudioDataByteSize = (int)context->write_buffer((float *)buffer->mAudioData, buffer->mAudioDataBytesCapacity);
@@ -64,7 +64,7 @@ static void output_callback(void * _Nonnull data, AudioQueueRef queue, AudioQueu
 	}
 }
 
-static void is_running_listener_callback(void * _Nonnull data, AudioQueueRef queue, AudioQueuePropertyID property_id) {
+static void is_running_listener_callback(void *data, AudioQueueRef queue, AudioQueuePropertyID property_id) {
 	UInt32 is_running;
 	UInt32 size = sizeof(UInt32);
 	AudioQueueGetProperty(queue, property_id, &is_running, &size);
@@ -76,7 +76,7 @@ static void is_running_listener_callback(void * _Nonnull data, AudioQueueRef que
 	}
 }
 
-int cassette_play(const int * _Nullable device_id, const int * _Nullable sample_rate, size_t (^ _Nonnull write_buffer)(float * _Nonnull, size_t), void (^ _Nonnull completion_handler)(int)) {
+int cassette_play(const int *device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int)) {
 	// TODO:
 	AudioStreamBasicDescription audio_format = default_audio_format;
 	audio_format.mSampleRate = (Float64)*sample_rate;
@@ -122,7 +122,7 @@ int cassette_play(const int * _Nullable device_id, const int * _Nullable sample_
 	return noErr;
 }
 
-static OSStatus clean_up_play(play_context * _Nonnull data, AudioQueueRef queue, OSStatus status) {
+static OSStatus clean_up_play(play_context *data, AudioQueueRef queue, OSStatus status) {
 	// ensure clean up called only once
 	bool expected = false;
 	if (!atomic_compare_exchange_strong(&data->is_disposed, &expected, true)) {
@@ -158,7 +158,7 @@ static OSStatus ExtAudioFileCreateWithPath(const char *path, AudioFileTypeID inF
 	return status;
 }
 
-int cassette_write_file(const char * _Nonnull path, int sample_rate, size_t (^ _Nonnull write_buffer)(float * _Nonnull , size_t)) {
+int cassette_write_file(const char *path, int sample_rate, size_t (^write_buffer)(float *, size_t)) {
 	AudioStreamBasicDescription audio_format = default_audio_format;
 	audio_format.mSampleRate = (Float64)sample_rate;
 	AudioStreamBasicDescription file_format = default_file_format;
