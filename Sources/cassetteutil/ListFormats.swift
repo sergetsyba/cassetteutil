@@ -7,13 +7,16 @@
 
 import ArgumentParser
 
-struct ListFormats: ParsableCommand {
-	static let configuration = CommandConfiguration(
-		abstract: "List supported data formats.")
-	
-	func run() throws {
-		for format in Format.cases {
-			print(format)
+extension CassetteUtility {
+	struct ListFormats: ParsableCommand {
+		static let configuration = CommandConfiguration(
+			commandName: "list-formats",
+			abstract: "List supported data formats.")
+		
+		func run() throws {
+			for format in Format.cases {
+				print(format)
+			}
 		}
 	}
 }
