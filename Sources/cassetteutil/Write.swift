@@ -6,10 +6,8 @@
 //
 
 import Foundation
-import AudioToolbox
 import ArgumentParser
 import libcassetteio
-import AVFoundation
 
 extension CassetteUtility {
 	struct Write: AsyncParsableCommand {
@@ -23,22 +21,25 @@ extension CassetteUtility {
 		var format: Format
 		
 		@Option(help: ArgumentHelp(
+			"File to encode.",
+			discussion: "When omitted, encodes data from standard input.",
+			valueName: "path"),
+				transform: Self.mapInputFile(argument:))
+		var inputFile: FileHandle?
+		
+		@Option(help: ArgumentHelp(
 			"Audio device to write output to.",
 			discussion: "Uses default audio output device when omitted.\n" +
 			"Use --list-outputs to see available audio devices.",
-			valueName: "device-id"))
+			valueName: "device-id"),
+				transform: Self.mapOutputDevice(argument:))
 		var output: AudioDevice?
 		
 		@Option(help: ArgumentHelp(
-			"File to encode.",
-			discussion: "When omitted, encodes data from standard input.",
-			valueName: "path"))
-		var inputFile: URL?
-		
-		@Option(help: ArgumentHelp(
 			"File to write audio output to.",
-			valueName: "path"))
-		var outputFile: URL?
+			valueName: "path"),
+				transform: Self.mapOutputFile(argument:))
+		var outputFile: FileHandle?
 		
 		@Option(help: ArgumentHelp(
 			"Output audio sample rate.",
@@ -46,100 +47,166 @@ extension CassetteUtility {
 			"audio device when playing or 44100 when writing a file."))
 		var sampleRate: Int?
 		
-		func validate() throws {
-			// verify input file exists, when specified
+		private static func mapInputFile(argument path: String) throws -> FileHandle {
+			// verify argument is a file URL
+			guard let url = URL(string: path),
+				  url.isFileURL else {
+				throw WriteError.inputNotFile(path)
+			}
+			// verify input file exists
 			let manager: FileManager = .default
-			if let path = self.inputFile?.path() {
-				guard manager.fileExists(atPath: path) else {
-					throw WriteCommandError.inputFileDoesNotExist(path)
-				}
-				// verify file is readable
-				guard manager.isReadableFile(atPath: path) else {
-					throw WriteCommandError.inputFileNotReadable(path)
-				}
-				// verify input file is not empty
-				guard let attributes = try? manager.attributesOfItem(atPath: path),
-					  let size = attributes[.size] as? Int64,
-					  size > 0 else {
-					throw WriteCommandError.inputFileEmpty(path)
-				}
+			guard manager.fileExists(atPath: url.path) else {
+				throw WriteError.inputFileDoesNotExist(path)
 			}
-			// verify output file does not exists, when specified
-			if let path = self.outputFile?.path() {
-				guard manager.fileExists(atPath: path) == false else {
-					throw WriteCommandError.outputFileExists(path)
-				}
+			// verify input file is readable
+			guard manager.isReadableFile(atPath: url.path) else {
+				throw WriteError.inputFileNotReadable(path)
 			}
-			// verify either input file specified or there's data in
-			// standard input
-			guard manager.standardInputAvailable ||
-					manager.fileExists(atPath: self.inputFile?.path() ?? "") else {
-				throw WriteCommandError.noInput
+			// verify input file is not empty
+			guard let attributes = try? manager.attributesOfItem(atPath: path),
+				  let size = attributes[.size] as? Int64,
+				  size > 0 else {
+				throw WriteError.inputFileEmpty(path)
 			}
 			
-			// TODO: verify output audio device exists, when specified
+			return try FileHandle(forReadingFrom: url)
 		}
 		
-		func run() async throws {
-			try await withThrowingTaskGroup() {
-				let data = try self.readInput()
+		private static func mapOutputDevice(argument: String) throws -> AudioDevice {
+			// verify output device exists
+			guard let id = Int(argument),
+				  let device = AudioDevice(id: id),
+				  device.scope.contains(.output) else {
+				throw WriteError.outputDeviceDoesNotExist(argument)
+			}
+			
+			return device
+		}
+		
+		private static func mapOutputFile(argument path: String) throws -> FileHandle {
+			// verify argument is a file URL
+			guard let url = URL(string: path),
+				  url.isFileURL else {
+				throw WriteError.inputNotFile(path)
+			}
+			// verify output file does not exist
+			let manager: FileManager = .default
+			guard manager.fileExists(atPath: url.path) == false else {
+				throw WriteError.outputFileExists(path)
+			}
+			// verify output file directory exists
+			let folderURL = url.deletingLastPathComponent()
+			guard manager.directoryExists(atPath: folderURL.path) else {
+				throw WriteError.outputFileDirectoryDoesNotExist(path)
+			}
+			// verify output file directory is writable
+			guard manager.isWritableFile(atPath: url.path) else {
+				throw WriteError.outputFileDirectoryNotWritable(path)
+			}
+			
+			return try FileHandle(forWritingTo: url)
+		}
+		
+		private var inputData: Data {
+			get throws {
+				let data: Data?
+				if let inputFile = self.inputFile {
+					data = try inputFile.readToEnd()
+					try? inputFile.close()
+				} else {
+					let input: FileHandle = .standardInput
+					data = try input.readToEnd()
+				}
 				
+				// verify input is not empty
+				guard let data,
+					  data.count > 0 else {
+					throw WriteError.noInput
+				}
+				return data
+			}
+		}
+		
+		private var outputDevice: AudioDevice {
+			get throws {
 				// play encoded data on an audio device when output device is
 				// specified, or on play on default audio device when neither
 				// output device nor output file is specified
-				if self.output != nil || self.outputFile == nil {
-					$0.addTask() {
-						let device = self.output ?? .output
-						await device.playEncoded(data: data)
+				if let device = self.output {
+					return device
+				} else {
+					// verify default audio output device exists
+					guard let device: AudioDevice = .defaultOutput else {
+						throw WriteError.outputDefaultDeviceDoesNotExist
 					}
-				}
-				// save encoded data when output file is specified
-				if let url = self.outputFile {
-					$0.addTask() {
-						let sampleRate = self.sampleRate ?? 44100
-						data.writeEncoded(to: url, sampleRate: sampleRate)
-					}
+					return device
 				}
 			}
 		}
 		
-		private func readInput() throws -> Data {
-			if let url = self.inputFile {
-				return try Data(contentsOf: url)
-			} else {
-				return try FileHandle.standardInput
-					.readToEnd()!
+		func run() async throws {
+			let data = try self.inputData
+			try await withThrowingTaskGroup() {
+				$0.addTask() {
+					try await self.outputDevice.playEncoded(data: data, sampleRate: self.sampleRate)
+				}
+				// save encoded data when output file is specified
+				if let outputFile {
+					$0.addTask() {
+						outputFile.writeEncoded(data, sampleRate: self.sampleRate ?? 44100)
+					}
+				}
+				
+				// rethrow in case any task fails
+				try await $0.waitForAll()
 			}
 		}
 	}
 }
 
-enum WriteCommandError: LocalizedError {
-	case noInput
-	case inputFileDoesNotExist(String)
-	case inputFileNotReadable(String)
-	case inputFileEmpty(String)
-	case outputDeviceDoesNotExist(AudioDeviceID)
-	case outputFileExists(String)
-	
-	var errorDescription: String? {
-		switch self {
-		case .noInput:
-			return "No input specified."
-		case .inputFileDoesNotExist(let path):
-			return "No input file at \(path)."
-		case .inputFileNotReadable(let path):
-			return "Cannot read file at \(path)."
-		case .inputFileEmpty:
-			return "Input file is empty."
-		case .outputDeviceDoesNotExist(let deviceId):
-			return "No output audio device with id \(deviceId)."
-		case .outputFileExists(let path):
-			return "File already exists at \(path)."
-		}
+// MARK: -
+// MARK: Errors
+extension CassetteUtility {
+	enum WriteError: Error {
+		case inputNotFile(String)
+		case inputFileDoesNotExist(String)
+		case inputFileNotReadable(String)
+		case inputFileEmpty(String)
+		case noInput
+		case outputDeviceDoesNotExist(String)
+		case outputDefaultDeviceDoesNotExist
+		case outputFileExists(String)
+		case outputFileDirectoryDoesNotExist(String)
+		case outputFileDirectoryNotWritable(String)
 	}
 }
 
+extension CassetteUtility.WriteError: LocalizedError {
+	var errorDescription: String? {
+		switch self {
+		case .inputNotFile(let value):
+			return "Invalid input file path \(value)."
+		case .inputFileDoesNotExist(let path):
+			return "No input file at \(path)."
+		case .inputFileNotReadable(let path):
+			return "Cannot read input file at \(path)."
+		case .inputFileEmpty:
+			return "Input file is empty."
+		case .noInput:
+			return "Input is empty."
+		case .outputDeviceDoesNotExist(let deviceId):
+			return "No audio output device with id \(deviceId)."
+		case .outputDefaultDeviceDoesNotExist:
+			return "No default audio output device."
+		case .outputFileExists(let path):
+			return "Output file already exists at \(path)."
+		case .outputFileDirectoryDoesNotExist(let path):
+			return "No output file directory at \(path)."
+		case .outputFileDirectoryNotWritable(let path):
+			return "Cannot write output file at \(path)."
+		}
+	}
+}
 
 // MARK: -
 // MARK: Convenience functionality
@@ -148,14 +215,11 @@ private extension FileManager {
 		var pollfd = pollfd(fd: STDIN_FILENO, events: Int16(POLLIN), revents: 0)
 		return poll(&pollfd, 1, 0) > 0 && (pollfd.events & Int16(POLLIN) != 0)
 	}
-}
-
-extension AudioDevice: ExpressibleByArgument {
-	init?(argument: String) {
-		guard let id = Int(argument) else {
-			return nil
-		}
-		self.init(id: id, name: "", scope: [])
+	
+	func directoryExists(atPath path: String) -> Bool {
+		var isDirectory: ObjCBool = false
+		let exists = self.fileExists(atPath: path, isDirectory: &isDirectory)
+		return exists && isDirectory.boolValue
 	}
 }
 
