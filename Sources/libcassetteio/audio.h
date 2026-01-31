@@ -18,14 +18,14 @@
  * [-1.0, 1.0] and return the __total size__ of written audio samples, in bytes. To signal the end of audio,
  * the block closure must return 0 once there are no more audio samples written.
  *
- * @param device_id Audio device id to play on. When NULL, plays audio on the default device.
+ * @param device_id Audio device id to play on.
  * @param sample_rate Output audio sample rate in Hz. When NULL, uses nominal sample rate of
  * 		the output audio device.
  * @param write_buffer Block closure, which is called to write a portion audio samples to the
  * 		specified buffer, and returns the size of written data, in bytes.
  * @return 0 when playback succeeds, error code when fails.
  */
-int cassette_play(const int *device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int));
+int cassette_play(int device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int));
 
 /**
  * Creates an AIFF file at the specified path using the block closure which generates the audio samples.

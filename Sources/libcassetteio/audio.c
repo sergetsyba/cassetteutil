@@ -42,6 +42,12 @@ static const AudioStreamBasicDescription default_file_format = {
 	.mBitsPerChannel = 8
 };
 
+static const AudioObjectPropertyAddress sample_rate_property = {
+	kAudioDevicePropertyNominalSampleRate,
+	kAudioObjectPropertyScopeGlobal,
+	kAudioObjectPropertyElementMain
+};
+
 
 // MARK: -
 // MARK: Playback
@@ -76,10 +82,20 @@ static void is_running_listener_callback(void *data, AudioQueueRef queue, AudioQ
 	}
 }
 
-int cassette_play(const int *device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int)) {
-	// TODO:
+int cassette_play(int device_id, const int *sample_rate, size_t (^write_buffer)(float *, size_t), void (^completion_handler)(int)) {
+	// set up playback format
 	AudioStreamBasicDescription audio_format = default_audio_format;
-	audio_format.mSampleRate = (Float64)*sample_rate;
+	if (sample_rate == NULL) {
+		// when sample rate is not set explicitly, use output device
+		// nominal sample rate
+		UInt32 data_size = sizeof(Float64);
+		OSStatus status = AudioObjectGetPropertyData(device_id, &sample_rate_property, 0, NULL, &data_size, &audio_format.mSampleRate);
+		if (status != noErr) {
+			return status;
+		}
+	} else {
+		audio_format.mSampleRate = (Float64)*sample_rate;
+	}
 	
 	// copy block closures onto heap be able to pass it to audio queue
 	// callbacks
@@ -112,6 +128,29 @@ int cassette_play(const int *device_id, const int *sample_rate, size_t (^write_b
 	if (status != noErr) {
 		return clean_up_play(data, queue, status);
 	}
+	
+	// set playback audio device
+	AudioObjectPropertyAddress property = {
+		kAudioDevicePropertyDeviceUID,
+		kAudioObjectPropertyScopeGlobal,
+		kAudioObjectPropertyElementMain
+	};
+	
+	// get audio device uid
+	UInt32 data_size = sizeof(CFStringRef);
+	CFStringRef device_uid;
+	status = AudioObjectGetPropertyData(device_id, &property, 0, NULL, &data_size, &device_uid);
+	if (status != noErr) {
+		return status;
+	}
+	
+	// set current audio device uid
+	status = AudioQueueSetProperty(queue, kAudioQueueProperty_CurrentDevice, &device_uid, data_size);
+	if (status != noErr) {
+		CFRelease(device_id);
+		return status;
+	}
+	CFRelease(device_uid);
 	
 	// start playback
 	status = AudioQueueStart(queue, NULL);
