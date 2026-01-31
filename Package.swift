@@ -18,12 +18,12 @@ let package = Package(
 	],
 	targets: [
 		.executableTarget(
-			name: "cassetteutil",
+			name: "CassetteUtility",
 			dependencies: [
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				"libcassetteio"
 			],
-			path: "Sources/cassetteutil"),
+			path: "Sources/CassetteUtility"),
 		.target(
 			name: "libcassetteio",
 			path: "Sources/libcassetteio",
