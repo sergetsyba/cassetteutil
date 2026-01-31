@@ -114,42 +114,15 @@ clean_up:
 	return status;
 }
 
-static OSStatus get_audio_device(AudioDeviceID device_id, cassette_audio_device *device) {
-	device->id = device_id;
-	device->scope = 0;
+static OSStatus get_sample_rate(AudioDeviceID device_id, Float64 *sample_rate) {
+	AudioObjectPropertyAddress property = {
+		kAudioDevicePropertyNominalSampleRate,
+		kAudioObjectPropertyScopeGlobal,
+		kAudioObjectPropertyElementMain
+	};
 	
-	// get device_name
-	OSStatus status = get_device_name(device_id, &device->name);
-	if (status != noErr) {
-		goto clean_up;
-	}
-	
-	// check whether audio input device
-	bool has_channels = false;
-	status = has_stream_channels(device_id, kAudioObjectPropertyScopeInput, &has_channels);
-	if (status != noErr) {
-		goto clean_up;
-	}
-	if (has_channels) {
-		device->scope |= CASSETTE_AUDIO_INPUT_DEVICE;
-	}
-	
-	// check whether audio input device
-	status = has_stream_channels(device_id, kAudioObjectPropertyScopeOutput, &has_channels);
-	if (status != noErr) {
-		goto clean_up;
-	}
-	if (has_channels) {
-		device->scope |= CASSETTE_AUDIO_OUTPUT_DEVICE;
-	}
-	
-	return noErr;
-	
-clean_up:
-	if (device->name != NULL) {
-		free(device->name);
-	}
-	return status;
+	UInt32 data_size = sizeof(Float64);
+	return AudioObjectGetPropertyData(device_id, &property, 0, NULL, &data_size, sample_rate);
 }
 
 int cassette_get_audio_devices(cassette_audio_device **devices, int *count) {
@@ -162,7 +135,7 @@ int cassette_get_audio_devices(cassette_audio_device **devices, int *count) {
 	
 	*devices = calloc(*count, sizeof(cassette_audio_device));
 	for (int index = 0; index < *count; ++index) {
-		status = get_audio_device(device_ids[index], &((*devices)[index]));
+		status = cassette_get_audio_device(device_ids[index], &((*devices)[index]));
 		if (status != noErr) {
 			goto clean_up;
 		}
@@ -184,6 +157,76 @@ clean_up:
 	return status;
 }
 
+int cassette_get_audio_device(int device_id, cassette_audio_device *device) {
+	device->id = device_id;
+	device->scope = 0;
+	
+	// get device_name
+	OSStatus status = get_device_name(device_id, &device->name);
+	if (status != noErr) {
+		return status;
+	}
+	
+	// check whether input device
+	bool has_channels = false;
+	status = has_stream_channels(device_id, kAudioObjectPropertyScopeInput, &has_channels);
+	if (status != noErr) {
+		goto clean_up;
+	}
+	if (has_channels) {
+		device->scope |= CASSETTE_AUDIO_INPUT_DEVICE;
+	}
+	
+	// check whether input device
+	status = has_stream_channels(device_id, kAudioObjectPropertyScopeOutput, &has_channels);
+	if (status != noErr) {
+		goto clean_up;
+	}
+	if (has_channels) {
+		device->scope |= CASSETTE_AUDIO_OUTPUT_DEVICE;
+	}
+	
+	// get device sample rate
+	status = get_sample_rate(device_id, &device->sample_rate);
+	if (status != noErr) {
+		goto clean_up;
+	}
+	
+	return noErr;
+	
+clean_up:
+	if (device->name != NULL) {
+		free(device->name);
+	}
+	return status;
+}
+
 int cassette_get_default_audio_device(cassette_audio_device_scope scope, cassette_audio_device *device) {
-	// TODO:
+	AudioObjectPropertySelector selector;
+	switch (scope) {
+		case CASSETTE_AUDIO_INPUT_DEVICE:
+			selector = kAudioHardwarePropertyDefaultInputDevice;
+			break;
+		case CASSETTE_AUDIO_OUTPUT_DEVICE:
+			selector = kAudioHardwarePropertyDefaultOutputDevice;
+			break;
+		default:
+			selector = 0;
+			break;
+	}
+	
+	AudioObjectPropertyAddress property = {
+		selector,
+		kAudioObjectPropertyScopeGlobal,
+		kAudioObjectPropertyElementMain
+	};
+	
+	AudioDeviceID device_id;
+	UInt32 data_size = sizeof(device_id);
+	OSStatus status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &property, 0, NULL, &data_size, &device_id);
+	if (status != noErr) {
+		return status;
+	}
+	
+	return cassette_get_audio_device(device_id, device);
 }

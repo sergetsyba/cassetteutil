@@ -19,6 +19,7 @@ typedef struct {
 	int id;
 	char *name;
 	uint8_t scope;
+	double sample_rate;
 } cassette_audio_device;
 
 /**
@@ -32,6 +33,18 @@ typedef struct {
  * 		Caller is responsible for deallocating memory once done.
  */
 int cassette_get_audio_devices(cassette_audio_device **devices, int *count);
+
+/**
+ * Returns audio device with the specified id.
+ *
+ * @param device_id Id of audio device to return.
+ * @param device Pointer an audio device object to write result into.
+ * @return 0 when getting audio device succeeds, error code when fails.
+ *
+ * @note This function allocates memory for the device and its name. Caller is responsible for
+ * 		deallocating memory once done.
+ */
+int cassette_get_audio_device(int device_id, cassette_audio_device *device);
 
 /**
  * Returns default audio device with the specified scope.
