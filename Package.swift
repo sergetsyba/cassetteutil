@@ -24,6 +24,13 @@ let package = Package(
 				"libcassetteio"
 			],
 			path: "Sources/CassetteUtility"),
+		.testTarget(
+			name: "CassetteUtilityTests",
+			dependencies: ["CassetteUtility"],
+			path: "Tests/CassetteUtilityTests",
+			resources: [
+				.process("Resources")
+			]),
 		.target(
 			name: "libcassetteio",
 			path: "Sources/libcassetteio",

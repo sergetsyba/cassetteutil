@@ -48,14 +48,13 @@ extension CassetteUtility {
 		var sampleRate: Int?
 		
 		private static func mapInputFile(argument path: String) throws -> FileHandle {
-			// verify argument is a file URL
-			guard let url = URL(string: path),
-				  url.isFileURL else {
-				throw WriteError.inputNotFile(path)
-			}
-			// verify input file exists
 			let manager: FileManager = .default
-			guard manager.fileExists(atPath: url.path) else {
+			
+			// verify input file exists
+			var isDirectory: ObjCBool = false
+			guard let url = URL(string: path),
+				  manager.fileExists(atPath: path, isDirectory: &isDirectory),
+				  isDirectory.boolValue == false else {
 				throw WriteError.inputFileDoesNotExist(path)
 			}
 			// verify input file is readable
@@ -72,26 +71,11 @@ extension CassetteUtility {
 			return try FileHandle(forReadingFrom: url)
 		}
 		
-		private static func mapOutputDevice(argument: String) throws -> AudioDevice {
-			// verify output device exists
-			guard let id = Int(argument),
-				  let device = AudioDevice(id: id),
-				  device.scope.contains(.output) else {
-				throw WriteError.outputDeviceDoesNotExist(argument)
-			}
-			
-			return device
-		}
-		
 		private static func mapOutputFile(argument path: String) throws -> FileHandle {
-			// verify argument is a file URL
-			guard let url = URL(string: path),
-				  url.isFileURL else {
-				throw WriteError.inputNotFile(path)
-			}
 			// verify output file does not exist
 			let manager: FileManager = .default
-			guard manager.fileExists(atPath: url.path) == false else {
+			guard let url = URL(string: path),
+				  manager.fileExists(atPath: url.path) == false else {
 				throw WriteError.outputFileExists(path)
 			}
 			// verify output file directory exists
@@ -101,10 +85,21 @@ extension CassetteUtility {
 			}
 			// verify output file directory is writable
 			guard manager.isWritableFile(atPath: url.path) else {
-				throw WriteError.outputFileDirectoryNotWritable(path)
+				throw WriteError.outputFileDirectoryNotWritable(folderURL.path)
 			}
 			
 			return try FileHandle(forWritingTo: url)
+		}
+		
+		private static func mapOutputDevice(argument: String) throws -> AudioDevice {
+			// verify output device exists
+			guard let id = Int(argument),
+				  let device = AudioDevice(id: id),
+				  device.scope.contains(.output) else {
+				throw WriteError.outputDeviceDoesNotExist(argument)
+			}
+			
+			return device
 		}
 		
 		private var inputData: Data {
@@ -190,8 +185,8 @@ extension CassetteUtility.WriteError: LocalizedError {
 			return "No input file at \(path)."
 		case .inputFileNotReadable(let path):
 			return "Cannot read input file at \(path)."
-		case .inputFileEmpty:
-			return "Input file is empty."
+		case .inputFileEmpty(let path):
+			return "Input file is empty \(path)."
 		case .noInput:
 			return "Input is empty."
 		case .outputDeviceDoesNotExist(let deviceId):
