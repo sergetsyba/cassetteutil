@@ -10,19 +10,31 @@ import PackageDescription
 
 let package = Package(
 	name: "CassetteUtility",
+	platforms: [
+		.macOS(.v13)
+	],
 	dependencies: [
 		.package(url: "https://github.com/apple/swift-argument-parser", from: "1.7.0")
 	],
 	targets: [
 		.executableTarget(
-			name: "cassetteutil",
+			name: "CassetteUtility",
 			dependencies: [
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				"libcassetteio"
 			],
-			path: "Sources/cassetteutil"),
+			path: "Sources/CassetteUtility"),
+		.testTarget(
+			name: "CassetteUtilityTests",
+			dependencies: ["CassetteUtility"],
+			path: "Tests/CassetteUtilityTests",
+			resources: [
+				.process("Resources")
+			]),
 		.target(
 			name: "libcassetteio",
-			dependencies: [],
-			path: "Sources/libcassetteio")
+			path: "Sources/libcassetteio",
+			linkerSettings: [
+				.linkedFramework("CoreAudio")
+			])
 	])

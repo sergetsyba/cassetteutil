@@ -8,6 +8,9 @@
 #ifndef module_h
 #define module_h
 
-#include <../cassetteio.h>
+#include <../apple2.h>
+
+#include <../audio.h>
+#include <../device.h>
 
 #endif /* module_h */
