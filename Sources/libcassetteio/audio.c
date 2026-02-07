@@ -147,7 +147,7 @@ int cassette_play(int device_id, const int *sample_rate, size_t (^write_buffer)(
 	// set current audio device uid
 	status = AudioQueueSetProperty(queue, kAudioQueueProperty_CurrentDevice, &device_uid, data_size);
 	if (status != noErr) {
-		CFRelease(device_id);
+		CFRelease(device_uid);
 		return status;
 	}
 	CFRelease(device_uid);
